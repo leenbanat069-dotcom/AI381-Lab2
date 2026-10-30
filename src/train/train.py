@@ -54,7 +54,7 @@ def train():
 
     joblib.dump(model, MODEL_PATH)
 
-    print(f"Training completed successfully.")
+    print("Training completed successfully.")
     print(f"Training samples: {len(X)}")
     print(f"Model saved to: {MODEL_PATH}")
 
