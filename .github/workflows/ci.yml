@@ -48,14 +48,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
+      - name: Set lowercase image name
+        run: |
+          IMAGE_NAME=$(echo "ghcr.io/${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE_NAME=$IMAGE_NAME" >> "$GITHUB_ENV"
+
       - name: Build Docker image
         run: |
-          docker build -t ghcr.io/${{ github.repository }}:${{ github.sha }} .
+          docker build -t "$IMAGE_NAME:${GITHUB_SHA}" .
 
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
-          image-ref: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          image-ref: ghcr.io/leenbanat069-dotcom/ai381-lab2:${{ github.sha }}
           format: table
           exit-code: '1'
           ignore-unfixed: true
@@ -68,12 +73,11 @@ jobs:
 
       - name: Push image to GHCR
         run: |
-          docker push ghcr.io/${{ github.repository }}:${{ github.sha }}
+          docker push "$IMAGE_NAME:${GITHUB_SHA}"
 
       - name: Get image digest
         run: |
-          IMAGE=ghcr.io/${{ github.repository }}:${{ github.sha }}
-          DIGEST=$(docker buildx imagetools inspect "$IMAGE" | awk '/Digest:/ {print $2; exit}')
+          DIGEST=$(docker buildx imagetools inspect "$IMAGE_NAME:${GITHUB_SHA}" | awk '/Digest:/ {print $2; exit}')
           echo "Image digest: $DIGEST"
           echo "### Published Docker Image" >> "$GITHUB_STEP_SUMMARY"
           echo "$DIGEST" >> "$GITHUB_STEP_SUMMARY"
