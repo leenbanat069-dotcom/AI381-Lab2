@@ -8,7 +8,8 @@ WORKDIR /build
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+    && pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir --upgrade setuptools urllib3 msgpack
 
 
 FROM python:3.14.4-slim AS runtime
