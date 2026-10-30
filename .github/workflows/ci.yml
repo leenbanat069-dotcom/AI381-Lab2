@@ -1,0 +1,80 @@
+name: AI381 Lab 2 CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Lint and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.14.4"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Run Ruff
+        run: ruff check src tests
+
+      - name: Run Pytest
+        run: python -m pytest -v
+
+  build-scan-push:
+    name: Build, Scan and Push Docker Image
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Build Docker image
+        run: |
+          docker build -t ghcr.io/${{ github.repository }}:${{ github.sha }} .
+
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          image-ref: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+
+      - name: Login to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Push image to GHCR
+        run: |
+          docker push ghcr.io/${{ github.repository }}:${{ github.sha }}
+
+      - name: Get image digest
+        run: |
+          IMAGE=ghcr.io/${{ github.repository }}:${{ github.sha }}
+          DIGEST=$(docker buildx imagetools inspect "$IMAGE" | awk '/Digest:/ {print $2; exit}')
+          echo "Image digest: $DIGEST"
+          echo "### Published Docker Image" >> "$GITHUB_STEP_SUMMARY"
+          echo "$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+
