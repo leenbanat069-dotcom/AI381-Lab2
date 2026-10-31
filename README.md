@@ -102,9 +102,16 @@ Registry: GitHub Container Registry (GHCR)
 
 - Image digest: `sha256:551acb5d52c3422afc91010ccc284d61870a386a7467aad16600e1d1d8fef512`
 Author
+## Running the Docker Container
+
+Pull the published image:
+
+```bash
+docker pull ghcr.io/leenbanat069-dotcom/ai381-lab2
 
 Leen Banat
 Jordan University of Science and Technology (JUST)
+
 
 
 
