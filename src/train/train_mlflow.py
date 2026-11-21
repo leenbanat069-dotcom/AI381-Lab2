@@ -87,7 +87,8 @@ def main() -> None:
     for name, clf in CANDIDATES.items():
         model = Pipeline([("prep", preprocessing()), ("clf", clf)]).fit(X_tr, y_tr)
         proba = model.predict_proba(X_te)[:, 1]
-        pred = proba > 0.5
+        # INTENTIONAL WEAK-MODEL PR DEMO: force an unusably high threshold.
+        pred = proba > 1.01
 
         with mlflow.start_run(run_name=name) as run:
             # parameters: what this run is
@@ -122,3 +123,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
