@@ -15,8 +15,15 @@ VALID_CUSTOMER = {
 
 def test_health_endpoint():
     response = client.get("/health")
+
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+
+    health = response.json()
+
+    assert health["status"] == "ok"
+    assert health["model_version"]
+    assert health["model"] == "logreg"
+    assert health["mlflow_run_id"]
 
 
 def test_predict_returns_probability():
@@ -57,3 +64,4 @@ def test_missing_field_is_rejected():
 
     response = client.post("/predict", json=customer)
     assert response.status_code == 422
+
